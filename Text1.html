@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dynamic Website Links</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
+</head>
+<body>
+    <input type="file" id="excelFile" accept=".xlsx,.xls">
+    <div id="linksContainer" class="block-content"></div>
+
+    <script>
+    document.getElementById('excelFile').addEventListener('change', handleFileUpload);
+
+    function handleFileUpload(e) {
+        const file = e.target.files[0];
+        const reader = new FileReader();
+
+        reader.onload = function(event) {
+            const workbook = XLSX.read(event.target.result, { type: 'binary' });
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const data = XLSX.utils.sheet_to_json(worksheet);
+
+            renderLinks(data);
+        };
+
+        reader.readAsBinaryString(file);
+    }
+
+    function getWebsiteFavicon(url) {
+        try {
+            const hostname = new URL(url).hostname;
+            return `https://www.google.com/s2/favicons?domain=${hostname}`;
+        } catch (error) {
+            console.error('Invalid URL', error);
+            return null;
+        }
+    }
+
+    function renderLinks(data) {
+        const container = document.getElementById('linksContainer');
+        container.innerHTML = ''; // 清空现有内容
+
+        data.forEach(item => {
+            const linkElement = document.createElement('a');
+            linkElement.href = item.Link;
+            linkElement.target = '_blank';
+
+            const imgElement = document.createElement('img');
+            imgElement.src = item.Icon || getWebsiteFavicon(item.Link);
+            imgElement.alt = 'Icon';
+            imgElement.width = 100;
+
+            const spanElement = document.createElement('span');
+            spanElement.textContent = item.Name;
+
+            linkElement.appendChild(imgElement);
+            linkElement.appendChild(spanElement);
+
+            container.appendChild(linkElement);
+        });
+    }
+    </script>
+
+    <style>
+    .block-content {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .block-content a {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-decoration: none;
+        width: 120px;
+    }
+    .block-content img {
+        max-width: 100px;
+        max-height: 100px;
+    }
+    .block-content span {
+        margin-top: 5px;
+        text-align: center;
+    }
+    </style>
+</body>
+</html>
